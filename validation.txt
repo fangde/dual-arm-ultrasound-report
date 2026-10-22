@@ -1,0 +1,6 @@
+Validation date: 2026-10-22 (Asia/Shanghai)
+3/3 unittest tests passed.
+200 telemetry samples; max IK position residual: 0.3984512504399882 mm.
+All 400 tool tracking records valid under range/FOV-only visibility.
+Video: H.264, 1280x720, 20 fps, 200 frames, 10.0 s.
+Kinematic / synthetic imaging demo; no tissue dynamics or occlusion validation.

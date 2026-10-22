@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="双 Franka 超声引导穿刺仿真报告：10 秒视频、系统架构、合成超声、模拟光学追踪、验证结果与实现边界。">
+<title>双 Franka 超声引导穿刺｜仿真报告</title>
+<style>
+:root{--bg:#0b1420;--card:#121f2f;--line:#2a3b4c;--text:#eaf2f8;--muted:#a8bbcc;--cyan:#6ee4d2;--gold:#f5c978}*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:25px}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.85 system-ui,-apple-system,"Microsoft YaHei",sans-serif}a{color:var(--cyan);text-underline-offset:4px}header,main,footer{max-width:1120px;margin:auto;padding:0 28px}header{padding-top:55px;padding-bottom:35px}.eyebrow{color:var(--cyan);letter-spacing:.14em;font-size:12px}h1{font-size:clamp(30px,5vw,54px);letter-spacing:-.04em;line-height:1.25;margin:18px 0}h2{font-size:28px;line-height:1.4;margin:0 0 20px}h3{font-size:19px;margin:0 0 8px}p{margin:0 0 16px}.lead{max-width:850px;font-size:19px;color:var(--muted)}.meta{color:var(--muted);font-size:13px}.nav{display:flex;gap:20px;flex-wrap:wrap;margin-top:25px}.nav a{text-decoration:none;font-size:14px}.chips{display:flex;flex-wrap:wrap;gap:10px;margin:22px 0}.chip{border:1px solid var(--line);padding:4px 12px;border-radius:30px;font-size:13px}.video-wrap{border:1px solid var(--line);border-radius:16px;overflow:hidden;background:#050b12}video{width:100%;display:block;aspect-ratio:16/9}.video-note{padding:15px 20px;color:var(--muted);font-size:14px}.actions{display:flex;gap:12px;flex-wrap:wrap;margin:16px 0}.actions button,.actions a{border:1px solid var(--line);background:var(--card);color:var(--text);padding:10px 16px;border-radius:8px;cursor:pointer;font:inherit;font-size:14px;text-decoration:none}.actions button:hover,.actions a:hover{border-color:var(--cyan)}section{margin:60px 0}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:24px}.card p{color:var(--muted);font-size:15px;margin:0}.number{font-size:34px;color:var(--cyan);line-height:1.25;margin-bottom:10px}.label{font-size:13px;color:var(--muted)}.note{border-left:3px solid var(--gold);background:#25251f;padding:18px 22px;color:#e8dcc3;margin:24px 0}.flow{display:flex;gap:10px;align-items:stretch;flex-wrap:wrap}.flow div{flex:1;min-width:170px;padding:18px;border:1px solid var(--line);border-radius:10px}.flow small{display:block;color:var(--muted);margin-top:6px}.table-wrap{overflow:auto}table{border-collapse:collapse;width:100%;font-size:15px}th,td{text-align:left;padding:14px 16px;border-bottom:1px solid var(--line);vertical-align:top}th{color:var(--cyan);background:var(--card)}td{color:var(--muted)}td:first-child{color:var(--text);min-width:140px}code{font-family:Consolas,monospace;background:#1b2c3e;padding:2px 5px;border-radius:4px;font-size:.9em}pre{overflow:auto;background:#08111c;padding:22px;border-radius:10px;line-height:1.65}pre code{background:none;padding:0}figure{margin:25px 0}figure img{width:100%;border:1px solid var(--line);border-radius:12px}figcaption{font-size:13px;color:var(--muted);margin-top:8px}.two{display:grid;grid-template-columns:1fr 1fr;gap:20px}li{margin-bottom:8px;color:var(--muted)}footer{padding-top:20px;padding-bottom:45px;border-top:1px solid var(--line);font-size:13px;color:var(--muted)}@media(max-width:700px){header,main,footer{padding-left:18px;padding-right:18px}.grid,.two{grid-template-columns:1fr}section{margin:42px 0}h2{font-size:24px}th,td{padding:12px 10px}}@media print{body{background:white;color:#111}.nav,.actions,video{display:none}.card,th{background:#eee}p,.lead,td,li,.meta,.label{color:#333}section{break-inside:avoid}a{color:#146655}}
+</style>
+</head>
+<body>
+<header>
+<div class="eyebrow">ROBOTICS SIMULATION / PROJECT REPORT</div>
+<h1>双 Franka 超声引导穿刺</h1>
+<p class="lead">模拟人的双手协同：一臂持超声探头完成扫描，另一臂持针完成进针与退针。将机械臂运动、组织切面与光学标记位姿放到同一场景中观察。</p>
+<p class="meta">报告日期：2026-10-22 · 视频生成：2026-09-24 · 项目：dualArmultrasound</p>
+<div class="chips"><span class="chip">mjlab 场景构建</span><span class="chip">MuJoCo 渲染</span><span class="chip">合成 B 模式超声</span><span class="chip">模拟光学追踪</span></div>
+<nav class="nav" aria-label="报告章节"><a href="#demo">视频说明</a><a href="#system">系统设计</a><a href="#imaging">成像与追踪</a><a href="#results">验证结果</a><a href="#limits">实现边界</a><a href="#reproduce">复现方法</a></nav>
+</header>
+<main>
+<section id="demo" style="margin-top:0">
+<div class="video-wrap"><video id="demo-video" controls playsinline preload="metadata" poster="media/poster.png" aria-label="双 Franka 10 秒仿真演示"><source src="media/demo.mp4" type="video/mp4"><track kind="captions" src="media/captions.vtt" srclang="zh" label="中文说明" default>浏览器不支持视频，请下载下方 MP4。</video><div class="video-note">10 秒 · 1280 × 720 · 20 fps · H.264 / MP4 · 无音轨，附中文阶段字幕。左侧为外置相机画面，右侧为合成超声、进针位移与标记可见数量。</div></div>
+<div class="actions"><button type="button" data-time="0">00:00 扫描定位</button><button type="button" data-time="4">00:04 进针</button><button type="button" data-time="7.2">00:07.2 退针</button><a href="media/demo.mp4" download>下载视频</a></div>
+<div class="grid"><article class="card"><h3>01 / 扫描定位</h3><p>0–4 秒，探头沿人体纵向从约 −65 mm 移到 0 mm。针保持 −12 mm 的入针位移，超声组织截面随扫描位置连续变化。</p></article><article class="card"><h3>02 / 固定探头进针</h3><p>4–7.2 秒，探头保持在扫描中心。针沿成像平面内、与声束法向成 35° 的方向推进，指令位移从 −12 mm 增至 65 mm。</p></article><article class="card"><h3>03 / 退针</h3><p>7.2–10 秒，探头保持不动，针沿原路径退出至 −12 mm。亮针回波随针的位置改变。本片没有演示人体移动。</p></article></div>
+<div class="note">视频中的“进针位移”是沿设定针轴、相对几何入针参考点的指令量，不等于经组织接触检测得到的实际穿刺深度。视频展示预设运动序列，未使用超声反馈自动识别靶点或闭环引导。</div>
+</section>
+<section id="system"><h2>系统设计：双手操作的统一场景</h2>
+<p>原型将两条 Franka Panda 放在人体两侧。探头和针刚性连接在各自末端，人体由椭球与胶囊等几何体构成，外置 RGB 相机同时观察人体、双臂和工具。交互界面支持扫描横纵位置、探头倾角、进针位移、人体平移和旋转。</p>
+<div class="flow"><div><strong>输入与轨迹</strong><small>滑块或分阶段预设运动<br>米 / 角度 → 目标末端位姿</small></div><div><strong>双臂逆运动学</strong><small>阻尼雅可比迭代<br>关节限位 → 正运动学</small></div><div><strong>同步观测</strong><small>RGB 相机渲染<br>组织切片 / 针回波 / 标记拟合</small></div></div>
+<div class="table-wrap"><table><thead><tr><th>模块</th><th>实现</th><th>输出</th></tr></thead><tbody>
+<tr><td>场景与机器人</td><td>Menagerie Panda 网格及关节结构；mjlab SceneCfg 与 MjSpec 组合场景</td><td>18 个关节位置变量，16 个执行器，1 个 RGB 相机</td></tr>
+<tr><td>运动</td><td>两臂分别进行末端位姿逆运动学求解，限制关节范围后执行 MuJoCo 正运动学</td><td>末端实际位姿与位置误差</td></tr>
+<tr><td>人体</td><td>基本几何外形；内部程序化组织随人体坐标系平移、旋转</td><td>统一的人体外形与组织空间</td></tr>
+<tr><td>工具</td><td>探头与针刚性安装；各配置四个非共面反光标记</td><td>探头成像坐标、针尖坐标、标记世界位置</td></tr>
+</tbody></table></div></section>
+<section id="imaging"><h2>超声与光学追踪如何联动</h2><div class="two"><article class="card"><h3>超声来自三维组织切面</h3><p>以实际探头末端位姿为基准，局部 X 轴为图像横向，局部 Z 轴为深度，采样 130 × 140 mm 的切面。切面映射回人体坐标后，计算组织层、血管和病灶、固定三维散斑及深度衰减。针段靠近切面时形成亮回波，探头离开接触高度时信号减弱。</p></article><article class="card"><h3>追踪来自标记刚体拟合</h3><p>每个工具四个标记的模拟三维测量叠加 0.25 mm 标准差噪声，再进行刚体最小二乘拟合。输出工具在追踪仪坐标系中的位置、XYZW 四元数、拟合残差和有效性；少于三个可见标记时不输出有效位姿。</p></article></div>
+<figure><img src="media/insertion.png" alt="视频约第 5 秒：双臂保持探头并推进针，右侧显示超声图像和追踪状态" loading="lazy"><figcaption>视频中段截图：针进入探头的成像平面时，超声图像中出现亮针回波。标记可见性只考虑距离和视场，不包含遮挡。</figcaption></figure>
+<p class="meta">工具坐标约定：探头成像原点在工具原点沿局部 Z 轴 0.062 m 处；针尖在针工具原点沿局部 Z 轴 0.19 m 处。追踪输出为工具原点位姿，并非直接输出针尖位姿。</p></section>
+<section id="results"><h2>验证结果与证据</h2><div class="grid"><div class="card"><div class="number">200 帧</div><div class="label">10 秒视频，完整解码检查通过</div></div><div class="card"><div class="number">0.3985 mm</div><div class="label">记录轨迹中两臂最大末端位置残差</div></div><div class="card"><div class="number">3 / 3</div><div class="label">2026-10-22 本机功能测试通过</div></div></div>
+<div class="table-wrap"><table><thead><tr><th>检查</th><th>方法与结果</th><th>解释范围</th></tr></thead><tbody>
+<tr><td>视频轨迹</td><td>读取 200 帧遥测，取两臂位置残差的最大值：0.398451 mm</td><td>仅为该轨迹的逆运动学数值残差，不是穿刺精度或实体机器人精度</td></tr>
+<tr><td>代表性位姿</td><td>检查默认、扫描、倾斜和人体移动组合；位置残差低于 2 mm，关节处于限位内</td><td>未覆盖全部滑块组合，也未验证避碰</td></tr>
+<tr><td>图像变化</td><td>改变扫描位置、倾角和进针位移，图像平均绝对差均超过测试阈值</td><td>验证图像与状态相关，不证明超声物理真实性</td></tr>
+<tr><td>追踪坐标</td><td>零噪声下，拟合坐标与变换后的标记位置在 1e−10 m 数值容差内一致</td><td>验证刚体变换与拟合实现；并非测量设备精度</td></tr>
+<tr><td>模拟追踪有效性</td><td>本视频 200 帧、两套工具追踪均有效</td><td>只按视场与距离判定，不能推断无遮挡或真实可观测性</td></tr>
+</tbody></table></div><p style="margin-top:16px"><a href="media/telemetry.json" download>下载视频逐帧遥测 JSON</a> · <a href="validation.txt">查看本次验证记录</a></p></section>
+<section id="limits"><h2>实现边界与后续工作</h2><p>当前完成的是场景构建、几何运动、合成图像与模拟追踪的联动原型。mjlab 用于场景组合和编译；演示直接设置逆运动学关节解，再进行 MuJoCo 正运动学与渲染。它尚未运行 mjlab GPU 动力学或强化学习训练。</p>
+<div class="two"><div class="card"><h3>尚未实现</h3><ul><li>软组织切割、变形、针弯曲、接触力与穿刺力模型。</li><li>碰撞规划、稳定接触与手指抓取过程。</li><li>声波传播、真实 CT/MRI 组织数据和超声设备标定。</li><li>追踪遮挡、反光球识别、双目三角化及真实硬件接口。</li><li>超声靶点识别与针尖闭环控制。</li></ul></div><div class="card"><h3>建议的下一阶段</h3><ol><li>加入工具、人体与相机的标定参数，统一误差评估。</li><li>增加接触及碰撞检测，约束探头贴合与针的可行运动。</li><li>接入体数据切片与更完整的针回波模型。</li><li>加入遮挡与丢失恢复，再评估图像和追踪融合。</li><li>在明确动力学模型后开展闭环控制验证。</li></ol></div></div></section>
+<section id="reproduce"><h2>复现与项目资料</h2><p>已有项目环境下，可运行以下命令生成相同阶段的视频。mjlab 环境与 CPU 演示环境分别安装，避免混用 MuJoCo 版本约束。</p><pre><code># 项目目录内运行
+.venv-mjlab\Scripts\python.exe -m dual_arm.video --seconds 10 --fps 20
+.venv-mjlab\Scripts\python.exe -m unittest discover -s tests -v
+
+# 交互界面
+.venv-mjlab\Scripts\python.exe -m dual_arm.app --backend mjlab</code></pre>
+<p>报告随附可复现的项目源码包（不含虚拟环境与机器人网格）。解压后按 README 安装依赖，运行 <code>download_assets.py</code> 获取 Panda 网格。</p><div class="actions"><a href="project-source.zip" download>下载项目源码</a><a href="report.md" download>下载 Markdown 报告</a></div>
+<p class="meta">模型与框架：<a href="https://github.com/google-deepmind/mujoco_menagerie/tree/main/franka_emika_panda">MuJoCo Menagerie / Franka Panda</a>（模型许可证随源码包保留）；<a href="https://github.com/mujocolab/mjlab">mjlab</a>；<a href="https://github.com/google-deepmind/mujoco">MuJoCo</a>。视频为本项目本地仿真输出，人体与超声均为合成内容。</p></section>
+</main><footer>双 Franka 超声引导穿刺 · 原型实验报告 · 2026-10-22<br>报告用于说明当前实现与可复现证据，不代表临床或真实机器人性能验证。</footer>
+<script>const video=document.getElementById('demo-video');document.querySelectorAll('[data-time]').forEach(button=>button.addEventListener('click',()=>{video.currentTime=Number(button.dataset.time);video.play().catch(()=>{});}));</script>
+</body></html>
